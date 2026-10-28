@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.png binary
+# Fixture com quebras do Windows de propósito (teste "importar um .txt (quebras do Windows)").
+tests/e2e/fixtures/import/roteiro.txt -text

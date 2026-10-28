@@ -1,0 +1,20 @@
+{
+  "name": "teleprompter",
+  "version": "1.0.2",
+  "private": true,
+  "description": "Teleprompter minimalista (PWA) para gravar vídeos no celular e no tablet, com servidor local que lista os roteiros do PC.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tiagosandrade/Teleprompterforever.git"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test \"tests/unit/*.test.mjs\"",
+    "test:e2e": "node tests/e2e/run.mjs"
+  }
+}

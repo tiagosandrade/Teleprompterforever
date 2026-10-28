@@ -1,0 +1,242 @@
+/* Editor (tela inicial): cabeçalho · campo de texto · rodapé. Componentes vêm de components.css. */
+
+.ed {
+  display: flex;
+  flex-direction: column;
+  background: var(--c-bg);
+  /* Teclado virtual aberto (visualViewport, ver editor.js): a tela termina acima dele e o rodapé fica visível. */
+  bottom: var(--ed-keyboard, 0px);
+}
+
+/* Coluna de leitura: 72ch na fonte do campo (18 px), para cabeçalho, aviso e rodapé alinharem com o texto. */
+.ed-col {
+  width: 100%;
+  max-width: 72ch;
+  margin-inline: auto;
+  font-size: calc(var(--fs-body) * 1.125);
+}
+
+/* ---------- Cabeçalho ---------- */
+
+.ed-header {
+  flex: none;
+  padding: var(--safe-top) calc(var(--gutter) + var(--safe-right)) 0 calc(var(--gutter) + var(--safe-left));
+}
+
+.ed-header__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: calc(var(--hit) + var(--space-4));
+}
+
+.ed-brand {
+  flex: none;
+  font-size: var(--fs-title);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.ed-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  margin-right: calc(-1 * var(--space-3));
+}
+
+/* Marca + três ações com rótulo pedem ~560 px: abaixo de 600 px (todo celular em pé), só ícone. */
+@media (max-width: 599.98px) {
+  .ed-actions .btn__label {
+    display: none;
+  }
+
+  .ed-actions .btn {
+    width: var(--hit);
+    padding: 0;
+    border-radius: var(--radius-pill);
+  }
+}
+
+/* ---------- Campo de texto ---------- */
+
+.ed-main {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 var(--safe-right) 0 var(--safe-left);
+}
+
+.ed-text {
+  display: block;
+  flex: 1;
+  width: 100%;
+  max-width: calc(72ch + 2 * var(--gutter));
+  height: 100%;
+  margin: 0 auto;
+  padding: var(--space-2) var(--gutter) var(--space-6);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--c-text);
+  caret-color: var(--c-accent);
+  font-family: var(--font-ui);
+  font-size: calc(var(--fs-body) * 1.125);
+  line-height: var(--lh-editor);
+  resize: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.ed-text::placeholder {
+  color: var(--c-text-muted);
+  opacity: 1;
+}
+
+/* O cursor âmbar já mostra o foco; um contorno em volta da tela inteira só atrapalharia. */
+.ed-text:focus,
+.ed-text:focus-visible {
+  outline: none;
+}
+
+/* ---------- Aviso do iPhone ---------- */
+
+.ed-hint {
+  flex: none;
+  padding: 0 calc(var(--gutter) + var(--safe-right)) var(--space-3) calc(var(--gutter) + var(--safe-left));
+}
+
+/* ---------- Rodapé ---------- */
+
+.ed-footer {
+  flex: none;
+  padding: var(--space-3) calc(var(--gutter) + var(--safe-right)) max(var(--space-3), var(--safe-bottom))
+    calc(var(--gutter) + var(--safe-left));
+  border-top: 1px solid var(--c-border);
+  background: var(--c-bg);
+}
+
+/* Com o teclado aberto, a área do indicador de início fica coberta: não precisa de margem para ela. */
+.ed--keyboard .ed-footer {
+  padding-bottom: var(--space-3);
+}
+
+.ed-footer__bar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.ed-stats {
+  color: var(--c-text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-ui);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.ed-stats abbr {
+  text-decoration: none;
+}
+
+.ed-start {
+  width: 100%;
+}
+
+/* Tablet, ou celular deitado: estatísticas e botão numa linha só (deitado, empilhar tiraria duas linhas
+   do campo de texto). */
+@media (min-width: 768px), (max-height: 499px) and (orientation: landscape) {
+  .ed-footer__bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .ed-stats {
+    text-align: left;
+  }
+
+  .ed-start {
+    width: auto;
+  }
+}
+
+/* Celular deitado: cabeçalho, rodapé e margem do campo mais justos, para sobrar texto à vista. */
+@media (max-height: 499px) and (orientation: landscape) {
+  .ed-header__bar {
+    min-height: calc(var(--hit) + var(--space-2));
+  }
+
+  .ed-text {
+    padding-bottom: var(--space-3);
+  }
+
+  .ed-footer {
+    padding-top: var(--space-2);
+    padding-bottom: max(var(--space-2), var(--safe-bottom));
+  }
+}
+
+/* Aviso rápido centralizado logo acima do rodapé (ou do aviso do iPhone, quando ele aparece). */
+.ed-toast-anchor {
+  position: relative;
+  z-index: var(--z-toast);
+  flex: none;
+  height: 0;
+}
+
+.ed-toast {
+  position: absolute;
+  right: 0;
+  bottom: var(--space-3);
+  left: 0;
+  width: max-content;
+  margin-inline: auto;
+}
+
+/* Campo de arquivo escondido: continua no layout porque alguns navegadores não abrem o seletor de um campo com display: none. */
+.ed-file {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- Diálogo "Roteiros do PC" ---------- */
+
+.ed-dialog-status {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-5) var(--space-7);
+  color: var(--c-text-muted);
+  text-align: center;
+}
+
+.ed-dialog-status--error {
+  color: var(--c-text);
+}
+
+.ed-dialog-status--error::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c-danger);
+}
+
+.ed-dialog .list {
+  padding-bottom: var(--space-2);
+}

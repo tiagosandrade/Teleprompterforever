@@ -1,0 +1,38 @@
+/* Painel de ajustes (.pn-): a folha e os controles vêm de components.css; aqui só o específico. */
+
+.pn {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Arrastar o controle deslizante no iOS: sem atraso de toque duplo e sem rolar a folha junto. */
+.pn input {
+  touch-action: manipulation;
+}
+
+.pn .slider__head label {
+  cursor: pointer;
+}
+
+.pn-sublabel {
+  color: var(--c-text);
+  font-size: var(--fs-body);
+  line-height: var(--lh-tight);
+}
+
+.pn-step {
+  background-color: var(--c-surface-raised);
+}
+
+.pn-wide {
+  width: 100%;
+}
+
+.pn-switch-icon {
+  flex: none;
+  color: var(--c-text-muted);
+}
+
+.pn-reset {
+  color: var(--c-text-muted);
+}

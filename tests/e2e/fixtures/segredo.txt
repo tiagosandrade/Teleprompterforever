@@ -1,0 +1,1 @@
+SEGREDO: este arquivo fica fora de Roteiros/ e nunca pode ser servido.

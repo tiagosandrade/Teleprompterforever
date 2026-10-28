@@ -1,0 +1,814 @@
+/* Componentes compartilhados (sem prefixo): API em docs/DESIGN-SYSTEM.md, seção 3.
+   Estados (:active, :hover, :disabled) usam :where() para não ganhar especificidade:
+   uma classe de tela (.ed-, .pn-, .pr-) sobrescreve fundo e cor sem precisar de seletor mais forte. */
+
+/* ---------- Botão ---------- */
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--hit);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  color: var(--c-text);
+  font-size: var(--fs-headline);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-tight);
+  white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  transition:
+    scale var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    opacity var(--dur-base) var(--ease-out);
+}
+
+.btn .icon {
+  width: 24px;
+  height: 24px;
+}
+
+.btn--primary {
+  min-height: var(--hit-lg);
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-pill);
+  background-color: var(--c-accent);
+  color: var(--c-on-accent);
+  font-weight: var(--fw-semibold);
+}
+
+.btn--secondary {
+  background-color: var(--c-surface-raised);
+}
+
+.btn--ghost {
+  padding: 0 var(--space-3);
+  color: var(--c-text-muted);
+}
+
+.btn--icon {
+  width: var(--hit);
+  height: var(--hit);
+  padding: 0;
+  border-radius: var(--radius-pill);
+}
+
+.btn--glass {
+  background-color: var(--c-surface);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: inset 0 0 0 1px var(--c-border);
+}
+
+/* 36 × 36 visível; o pseudo-elemento amplia a área de toque para 44 px. */
+.btn--sm {
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  font-size: var(--fs-body);
+}
+
+.btn--sm::before {
+  content: '';
+  position: absolute;
+  inset: calc((36px - var(--hit)) / 2);
+}
+
+.btn--icon.btn--sm {
+  width: 36px;
+  padding: 0;
+}
+
+.btn--sm .icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Rótulo some no celular estreito quando o botão também tem ícone (o aria-label continua). */
+@media (max-width: 399.98px) {
+  .btn .icon ~ .btn__label {
+    display: none;
+  }
+}
+
+@media (hover: hover) {
+  .btn:where(:not(:disabled):hover) {
+    background-color: var(--c-surface-raised);
+  }
+
+  .btn--primary:where(:not(:disabled):hover) {
+    background-color: var(--c-accent);
+    filter: brightness(1.06);
+  }
+
+  .btn--secondary:where(:not(:disabled):hover) {
+    background-color: var(--c-surface-pressed);
+  }
+
+  .btn--ghost:where(:not(:disabled):hover) {
+    color: var(--c-text);
+  }
+
+  .btn--glass:where(:not(:disabled):hover) {
+    background-color: var(--c-surface-solid);
+  }
+}
+
+.btn:where(:not(:disabled):active) {
+  scale: 0.96;
+  background-color: var(--c-surface-pressed);
+}
+
+.btn--primary:where(:not(:disabled):active) {
+  background-color: var(--c-accent-pressed);
+  filter: none;
+}
+
+.btn--ghost:where(:not(:disabled):active) {
+  color: var(--c-text);
+}
+
+.btn:where(:disabled) {
+  opacity: 0.38;
+}
+
+/* ---------- Pílula (base do HUD) ---------- */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--c-surface);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--shadow-float);
+  color: var(--c-text);
+}
+
+.pill__sep {
+  flex: none;
+  width: 1px;
+  height: 24px;
+  background-color: var(--c-border);
+}
+
+.pill__value {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 3px;
+  min-width: 64px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.pill__value b {
+  font-size: var(--fs-headline);
+  font-weight: var(--fw-semibold);
+}
+
+.pill__value small {
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-medium);
+  color: var(--c-text-muted);
+}
+
+/* ---------- Controle segmentado ---------- */
+
+.seg {
+  display: flex;
+  gap: 2px;
+  min-height: var(--hit);
+  padding: 2px;
+  border-radius: var(--radius-md);
+  background-color: var(--c-surface-raised);
+}
+
+.seg__opt {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* O rádio nativo cobre a opção inteira, invisível: o toque cai nele e o leitor de tela o encontra. */
+.seg__opt input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.seg__opt span {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 0 var(--space-2);
+  border-radius: calc(var(--radius-md) - 2px);
+  color: var(--c-text);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-medium);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.seg__opt input:active + span {
+  background-color: var(--c-surface-pressed);
+}
+
+.seg__opt input:checked + span {
+  background-color: var(--c-text);
+  color: var(--c-bg);
+}
+
+.seg__opt input:focus-visible + span {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+.seg__opt input:disabled + span {
+  opacity: 0.38;
+}
+
+/* ---------- Controle deslizante ---------- */
+
+.slider {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.slider__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.slider__head output {
+  color: var(--c-text);
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.slider__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.slider input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: var(--hit);
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.slider input[type='range']:focus-visible {
+  outline: none;
+}
+
+.slider input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    to right,
+    var(--c-accent) 0 var(--fill, 0%),
+    var(--c-surface-raised) var(--fill, 0%) 100%
+  );
+}
+
+.slider input[type='range']::-webkit-slider-thumb {
+  width: 28px;
+  height: 28px;
+  margin-top: -12px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--c-text);
+  box-shadow: 0 1px 4px var(--c-scrim);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.slider input[type='range']:focus-visible::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 2px var(--c-bg),
+    0 0 0 4px var(--c-focus);
+}
+
+.slider input[type='range']::-moz-range-track {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--c-surface-raised);
+}
+
+.slider input[type='range']::-moz-range-progress {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--c-accent);
+}
+
+.slider input[type='range']::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--c-text);
+  box-shadow: 0 1px 4px var(--c-scrim);
+}
+
+.slider input[type='range']:disabled {
+  opacity: 0.38;
+}
+
+/* ---------- Interruptor ---------- */
+
+.switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--hit);
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.switch__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  color: var(--c-text);
+  font-size: var(--fs-body);
+  line-height: var(--lh-tight);
+}
+
+.switch__text small {
+  color: var(--c-text-muted);
+  font-size: var(--fs-caption);
+}
+
+/* O checkbox fica invisível exatamente sobre o trilho (toque e testes acertam o próprio campo). */
+.switch input {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  z-index: 1;
+  width: 51px;
+  height: 31px;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  translate: 0 -50%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.switch__track {
+  position: relative;
+  flex: none;
+  width: 51px;
+  height: 31px;
+  border-radius: var(--radius-pill);
+  background-color: var(--c-surface-pressed);
+  transition: background-color var(--dur-base) var(--ease-out);
+}
+
+.switch__track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: var(--c-text);
+  box-shadow: 0 1px 3px var(--c-scrim);
+  transition: translate var(--dur-base) var(--ease-out);
+}
+
+.switch input:checked + .switch__track {
+  background-color: var(--c-accent);
+}
+
+.switch input:checked + .switch__track::after {
+  translate: 20px 0;
+}
+
+.switch input:focus-visible + .switch__track {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+.switch input:disabled + .switch__track {
+  opacity: 0.38;
+}
+
+/* ---------- Folha / painel ---------- */
+
+.sheet {
+  position: fixed;
+  z-index: var(--z-panel);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--c-border);
+  background-color: var(--c-surface-strong);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--shadow-float);
+  color: var(--c-text);
+  /* Fechada: fora do toque na hora (o toque logo depois de fechar é do palco) e invisível
+     depois que a animação de saída termina. */
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    transform var(--dur-slow) var(--ease-out),
+    visibility 0s linear var(--dur-slow);
+}
+
+.sheet.is-open {
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition:
+    transform var(--dur-slow) var(--ease-out),
+    visibility 0s;
+}
+
+.sheet--bottom {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  max-height: 60vh;
+  max-height: 60dvh;
+  padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left);
+  border-bottom: 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  transform: translateY(100%);
+}
+
+/* A mesma folha descendo do topo: celular em pé com inversão vertical (a linha de leitura fica embaixo). */
+.sheet--top {
+  top: 0;
+  right: 0;
+  left: 0;
+  max-height: 60vh;
+  max-height: 60dvh;
+  padding: var(--safe-top) var(--safe-right) 0 var(--safe-left);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  transform: translateY(-100%);
+}
+
+.sheet--side {
+  top: calc(var(--gutter) + var(--safe-top));
+  width: min(340px, 100vw - 2 * var(--gutter));
+  max-height: calc(100% - 2 * var(--gutter) - var(--safe-top) - var(--safe-bottom));
+  border-radius: var(--radius-lg);
+}
+
+.sheet--left {
+  left: calc(var(--gutter) + var(--safe-left));
+  transform: translateX(calc(-100% - var(--gutter) - var(--safe-left) - var(--space-2)));
+}
+
+.sheet--right {
+  right: calc(var(--gutter) + var(--safe-right));
+  transform: translateX(calc(100% + var(--gutter) + var(--safe-right) + var(--space-2)));
+}
+
+.sheet__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 56px;
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-5);
+}
+
+.sheet__title {
+  font-size: var(--fs-headline);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+/* O título recebe o foco ao abrir só como ponto de partida para o teclado; não é interativo. */
+.sheet__title:focus {
+  outline: none;
+}
+
+.sheet__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 var(--space-5) var(--space-4);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sheet__section {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--c-border);
+}
+
+.sheet__section:first-child {
+  padding-top: var(--space-1);
+  border-top: 0;
+}
+
+.sheet__label {
+  color: var(--c-text-muted);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+/* ---------- Diálogo ---------- */
+
+.dialog {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.dialog.is-open {
+  pointer-events: auto;
+}
+
+.dialog__scrim {
+  position: absolute;
+  inset: 0;
+  background-color: var(--c-scrim);
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+.dialog.is-open .dialog__scrim {
+  opacity: 1;
+}
+
+.dialog__box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 70vh;
+  max-height: 70dvh;
+  padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left);
+  border: 1px solid var(--c-border);
+  border-bottom: 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background-color: var(--c-surface-strong);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--shadow-float);
+  color: var(--c-text);
+  transform: translateY(100%);
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.dialog.is-open .dialog__box {
+  transform: none;
+}
+
+.dialog__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 600px) {
+  .dialog {
+    align-items: center;
+    padding: calc(var(--gutter) + var(--safe-top)) calc(var(--gutter) + var(--safe-right))
+      calc(var(--gutter) + var(--safe-bottom)) calc(var(--gutter) + var(--safe-left));
+  }
+
+  .dialog__box {
+    width: min(480px, 100%);
+    max-height: 70%;
+    padding: 0;
+    border-bottom: 1px solid var(--c-border);
+    border-radius: var(--radius-lg);
+    opacity: 0;
+    transform: translateY(var(--space-2));
+    transition:
+      transform var(--dur-base) var(--ease-out),
+      opacity var(--dur-base) var(--ease-out);
+  }
+
+  .dialog.is-open .dialog__box {
+    opacity: 1;
+  }
+}
+
+/* ---------- Lista ---------- */
+
+.list > li + li {
+  border-top: 1px solid var(--c-border);
+}
+
+.list__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-3) var(--space-5);
+  text-align: left;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.list__title {
+  color: var(--c-text);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-tight);
+}
+
+.list__meta {
+  color: var(--c-text-muted);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (hover: hover) {
+  .list__item:where(:not(:disabled):hover) {
+    background-color: var(--c-surface-raised);
+  }
+}
+
+.list__item:where(:not(:disabled):active) {
+  background-color: var(--c-surface-pressed);
+}
+
+.list__item:where(:disabled) {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.list__item[aria-busy='true'] {
+  opacity: 1;
+  background-color: var(--c-surface-raised);
+}
+
+/* ---------- Aviso rápido (toast) ---------- */
+
+.toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: calc(100vw - 2 * var(--gutter));
+  min-height: 44px;
+  padding: 10px var(--space-4);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--c-surface);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--shadow-float);
+  color: var(--c-text);
+  font-size: 0.9375rem; /* 15 px */
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-tight);
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    translate var(--dur-base) var(--ease-out),
+    visibility 0s;
+}
+
+/* Escondido: usa a propriedade `translate` para não brigar com um `transform` de centralização. */
+.toast--hidden {
+  visibility: hidden;
+  opacity: 0;
+  translate: 0 var(--space-2);
+  pointer-events: none;
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    translate var(--dur-base) var(--ease-out),
+    visibility 0s linear var(--dur-base);
+}
+
+.toast__action {
+  min-height: 32px;
+  margin: -6px calc(-1 * var(--space-2)) -6px 0;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  color: var(--c-accent);
+  font-size: inherit;
+  font-weight: var(--fw-semibold);
+}
+
+.toast__action::before {
+  content: '';
+  position: absolute;
+  inset: -6px -4px;
+}
+
+.toast__action .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.btn--ghost.toast__action:where(:not(:disabled):active),
+.btn--ghost.toast__action:where(:not(:disabled):hover) {
+  color: var(--c-accent);
+}
+
+/* ---------- Faixa de dica (banner) ---------- */
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--c-surface-raised);
+  color: var(--c-text-muted);
+  font-size: var(--fs-body);
+  line-height: var(--lh-ui);
+}
+
+.banner p {
+  flex: 1;
+  min-width: 0;
+}
+
+.banner .btn {
+  flex: none;
+  margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) 0;
+  color: var(--c-text);
+}
+
+/* ---------- Sem backdrop-filter (ou com "Reduzir transparência"): superfícies sólidas ---------- */
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .btn--glass,
+  .pill,
+  .sheet,
+  .dialog__box,
+  .toast {
+    background-color: var(--c-surface-solid);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .btn--glass,
+  .pill,
+  .sheet,
+  .dialog__box,
+  .toast {
+    background-color: var(--c-surface-solid);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

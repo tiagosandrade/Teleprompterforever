@@ -1,0 +1,25 @@
+# Dependências e saídas de teste (o Playwright fica fora da pasta do app; ver tests/e2e/run.mjs)
+node_modules/
+test-results/
+playwright-report/
+tests/report/
+tests/screenshots/
+tests/blob-report/
+tests/json-report/
+*.log
+
+# Variáveis de ambiente e chaves
+.env
+.env.*
+.npmrc
+
+# Editor
+.vscode/
+
+# Roteiros de verdade nunca entram no repositório (as fixtures de teste ficam em tests/e2e/fixtures/Roteiros)
+/Roteiros/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini

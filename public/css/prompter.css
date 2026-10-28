@@ -1,0 +1,648 @@
+/* Teleprompter (#prompter-screen): palco, texto, guia, contagem, aviso, HUD e "Ajustar na tela".
+   Componentes (.btn, .pill, .seg, .toast) vêm de components.css; aqui só o contexto .pr-, preso a
+   #prompter-screen para valer sobre eles sem depender da ordem dos arquivos. */
+
+#prompter-screen {
+  /* Distância do HUD às bordas: margem, ou área segura + 8 px (no celular deitado a margem diminui). */
+  --pr-edge: var(--gutter);
+  --pr-top: max(var(--pr-edge), calc(var(--safe-top) + var(--space-2)));
+  --pr-right: max(var(--pr-edge), calc(var(--safe-right) + var(--space-2)));
+  --pr-bottom: max(var(--pr-edge), calc(var(--safe-bottom) + var(--space-2)));
+  --pr-left: max(var(--pr-edge), calc(var(--safe-left) + var(--space-2)));
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-stage);
+  overflow: hidden;
+  background: var(--c-stage);
+  color: var(--c-text);
+  font-family: var(--font-ui);
+  outline: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Gestos são do teleprompter (sem rolar, zoom, seleção ou menu), também nos filhos: o Chromium
+   reabilita o arrasto do navegador em elementos com overflow, e os botões herdam outro valor da base. */
+#prompter-screen,
+#prompter-screen * {
+  touch-action: none;
+}
+
+#prompter-screen[hidden],
+#prompter-screen [hidden] {
+  display: none !important;
+}
+
+/* ---------- Moldura (física), palco (espelha) e área (seção 10) ---------- */
+
+.pr-frame {
+  position: absolute;
+  top: calc(var(--safe-top) + var(--gutter));
+  right: calc(var(--safe-right) + var(--gutter));
+  bottom: calc(var(--safe-bottom) + var(--gutter));
+  left: calc(var(--safe-left) + var(--gutter));
+}
+
+.pr-stage {
+  position: absolute;
+  inset: 0;
+  transform: scale(var(--pr-mx, 1), var(--pr-my, 1));
+}
+
+.pr-area {
+  position: absolute;
+  top: 0;
+  left: calc(var(--area-x, 0) * 100%);
+  width: calc(var(--area-w, 1) * 100%);
+  height: calc(var(--area-h, 1) * 100%);
+}
+
+.pr-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.pr-text {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  color: var(--c-prompter);
+  font-family: var(--font-prompter);
+  font-weight: var(--fw-prompter);
+  line-height: var(--lh-prompter);
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  -webkit-hyphens: manual;
+  hyphens: manual;
+  will-change: transform;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+/* Palavra que não cabe na coluna (letra grande ou área estreita; o motor mede e a põe num .pr-hy): a quebra
+   dentro dela sai com hífen, em vez de partir a palavra em qualquer letra. As outras palavras nunca são
+   hifenizadas, nem no fim da linha (RF-03). Com .pr-text--hyphens, não cabe nenhuma palavra que o navegador
+   hifenizaria (6 caracteres ou mais): hifenizar o texto todo dá as mesmas quebras, sem um span por palavra. */
+.pr-hy,
+.pr-text--hyphens {
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  /* Pedaços de 3 letras ou mais de cada lado do hífen: nada de "a-" no fim da linha. */
+  hyphenate-limit-chars: 6 3 3;
+  -webkit-hyphenate-limit-before: 3;
+  -webkit-hyphenate-limit-after: 3;
+}
+
+/* Na contagem o texto fica apagado: o número se destaca e a leitura ainda não começou. */
+#prompter-screen[data-state="countdown"] .pr-text {
+  opacity: 0.25;
+}
+
+.pr-fade {
+  position: absolute;
+  right: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+/* Os esmaecimentos passam 2 px da borda da área: com o texto rolando em frações de pixel, o Chromium
+   deixa escapar uma fileira de pixels da linha seguinte além do recorte (medido no Pixel 7). */
+.pr-fade--top {
+  top: -2px;
+  height: calc(min(18%, 160px) + 2px);
+  background: linear-gradient(to bottom, var(--c-stage), transparent);
+}
+
+.pr-fade--bottom {
+  bottom: -2px;
+  height: calc(min(12%, 120px) + 2px);
+  background: linear-gradient(to top, var(--c-stage), transparent);
+}
+
+/* ---------- Guia de leitura (RF-14), contagem (RF-13) e aviso do teclado ---------- */
+
+.pr-guide {
+  display: none;
+  position: absolute;
+  top: 30%;
+  right: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+#prompter-screen[data-guide] .pr-guide {
+  display: block;
+}
+
+.pr-guide__line {
+  position: absolute;
+  top: -1px;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: var(--c-accent);
+  opacity: 0.18;
+}
+
+/* Setas por fora das bordas da área, apontando para dentro: não cobrem o texto. */
+.pr-guide__mark {
+  position: absolute;
+  top: -6px;
+  width: 10px;
+  height: 12px;
+  background: var(--c-accent);
+}
+
+.pr-guide__mark--start {
+  right: calc(100% + 3px);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.pr-guide__mark--end {
+  left: calc(100% + 3px);
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}
+
+.pr-countdown {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--c-prompter);
+  opacity: 0.9;
+  font-family: var(--font-prompter);
+  font-size: min(40vmin, 240px);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.pr-countdown__digit {
+  animation: pr-count-in var(--dur-slow) var(--ease-out) both;
+}
+
+@keyframes pr-count-in {
+  from {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+}
+
+#prompter-screen .pr-toast {
+  position: absolute;
+  inset: auto;
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  max-width: calc(100% - 2 * var(--space-4));
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, calc(-50% + 8px));
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out),
+    visibility 0s linear var(--dur-base);
+}
+
+#prompter-screen .pr-toast[data-show] {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%);
+  transition-delay: 0s;
+}
+
+/* ---------- HUD: só em pronto, pausado e fim (RF-15) ---------- */
+
+/* Escondido: opacity 0 e visibility hidden. Aparece com opacidade + 8 px de deslocamento.
+   O contêiner também troca a visibilidade (no mesmo tempo), para o estado do HUD ser verificável nele. */
+.pr-hud {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-hud);
+  pointer-events: none;
+  visibility: hidden;
+  transition: visibility 0s linear var(--dur-base);
+}
+
+.pr-top,
+.pr-bottom,
+.pr-empty {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out),
+    visibility 0s linear var(--dur-base);
+}
+
+#prompter-screen[data-hud] :is(.pr-hud, .pr-top, .pr-bottom, .pr-empty) {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+#prompter-screen[data-hud] :is(.pr-top, .pr-bottom) {
+  transform: none;
+}
+
+/* Só botões e pílula recebem toques; no resto do HUD o toque chega ao palco. */
+#prompter-screen[data-hud] :is(.pr-hud .btn, .pr-pill) {
+  pointer-events: auto;
+}
+
+.pr-top {
+  position: absolute;
+  top: var(--pr-top);
+  right: var(--pr-right);
+  left: var(--pr-left);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
+  transform: translateY(-8px);
+}
+
+.pr-top > :first-child {
+  justify-self: start;
+}
+
+.pr-top__end {
+  display: flex;
+  justify-self: end;
+  gap: var(--space-2);
+}
+
+.pr-bottom {
+  position: absolute;
+  right: 0;
+  bottom: var(--pr-bottom);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  /* Margem lateral menor que a da moldura: a pílula inteira cabe em 360 px. */
+  padding: 0 calc(var(--safe-right) + var(--space-2)) 0 calc(var(--safe-left) + var(--space-2));
+  transform: translateY(8px);
+}
+
+/* Véus escuros atrás das barras (só na pausa): tempo e dica legíveis sobre o texto branco.
+   Vão até a borda da tela; o excesso é cortado pelo overflow da tela. Sólidos atrás de toda a barra e só
+   esmaecem fora dela (32 px abaixo da de cima, 48 px acima da de baixo): numa faixa ainda translúcida, o alto
+   das letras da linha seguinte aparecia ao lado da dica como pontinhos cinza. O esmaecimento para antes da
+   linha que está na linha de leitura: o motor mede o espaço até ela (--pr-veil-top e --pr-veil-bottom). */
+.pr-top::before,
+.pr-bottom::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: calc(-1 * (var(--gutter) + var(--safe-right)));
+  left: calc(-1 * (var(--gutter) + var(--safe-left)));
+  pointer-events: none;
+}
+
+.pr-top::before {
+  --pr-fade: min(var(--space-6), var(--pr-veil-top, var(--space-6)));
+  top: calc(-1 * (var(--gutter) + var(--safe-top)));
+  bottom: calc(-1 * var(--pr-fade));
+  background: linear-gradient(to bottom, var(--c-stage) calc(100% - var(--pr-fade)), transparent);
+}
+
+.pr-bottom::before {
+  --pr-fade: min(var(--space-7), var(--pr-veil-bottom, var(--space-7)));
+  top: calc(-1 * var(--pr-fade));
+  bottom: calc(-1 * (var(--gutter) + var(--safe-bottom)));
+  background: linear-gradient(to top, var(--c-stage) calc(100% - var(--pr-fade)), transparent);
+}
+
+.pr-time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--c-text-muted);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--lh-tight);
+  text-shadow: 0 1px 12px var(--c-stage);
+}
+
+.pr-time__bar {
+  position: relative;
+  width: 120px;
+  height: 2px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--c-surface-raised);
+}
+
+.pr-time__fill {
+  position: absolute;
+  inset: 0;
+  background: var(--c-text-muted);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.pr-hint {
+  color: var(--c-text-muted);
+  font-size: var(--fs-body);
+  text-align: center;
+  text-shadow: 0 1px 12px var(--c-stage);
+}
+
+#prompter-screen .pr-pill {
+  max-width: 100%;
+}
+
+/* Reproduzir em âmbar; no fim, o destaque passa para Recomeçar. */
+#prompter-screen :is(.pr-play, [data-state="ended"] .pr-restart) {
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+}
+
+#prompter-screen :is(.pr-play, [data-state="ended"] .pr-restart):active {
+  background: var(--c-accent-pressed);
+}
+
+#prompter-screen .pr-play:disabled {
+  background: transparent;
+  color: var(--c-text);
+}
+
+/* A− e A+: letra em dois tamanhos com um sinal pequeno, em vez de ícone. */
+.pr-a {
+  display: inline-flex;
+  align-items: baseline;
+  font-weight: var(--fw-semibold);
+  line-height: 1;
+}
+
+.pr-a small {
+  margin-left: 1px;
+  font-size: var(--fs-caption);
+}
+
+.pr-a--sm {
+  font-size: calc(var(--fs-body) * 0.875);
+}
+
+.pr-a--lg {
+  font-size: var(--fs-title);
+}
+
+/* Sem texto: aviso fora do palco (não espelha; é lido olhando direto para a tela). */
+.pr-empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max-content;
+  max-width: min(320px, calc(100% - 2 * var(--gutter)));
+  color: var(--c-text-muted);
+  font-size: var(--fs-headline);
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+#prompter-screen:not([data-empty]) .pr-empty {
+  display: none;
+}
+
+/* ---------- Modo "Ajustar na tela" (seção 5.4) ---------- */
+
+.pr-outline {
+  display: none;
+  position: absolute;
+  inset: 0;
+  border: 2px dashed var(--c-accent);
+  pointer-events: none;
+}
+
+/* Área de toque de 44 px centrada na borda; o círculo de 28 px é o ::before. */
+.pr-handle {
+  display: none;
+  position: absolute;
+  z-index: 4;
+  width: var(--hit);
+  height: var(--hit);
+  margin: calc(var(--hit) / -2) 0 0 calc(var(--hit) / -2);
+  cursor: ew-resize;
+}
+
+.pr-handle::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 3px solid var(--c-accent);
+  border-radius: var(--radius-pill);
+  background: var(--c-prompter);
+  box-shadow: var(--shadow-float);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.pr-handle[data-active]::before {
+  transform: scale(1.15);
+}
+
+.pr-handle:is([data-handle="left"], [data-handle="right"]) {
+  top: 50%;
+}
+
+.pr-handle:is([data-handle="bottom"], [data-handle^="corner"]) {
+  top: 100%;
+}
+
+.pr-handle:is([data-handle="left"], [data-handle="corner-left"]) {
+  left: 0;
+}
+
+.pr-handle:is([data-handle="right"], [data-handle="corner-right"]) {
+  left: 100%;
+}
+
+.pr-handle[data-handle="bottom"] {
+  left: 50%;
+  cursor: ns-resize;
+}
+
+.pr-handle[data-handle="corner-left"] {
+  cursor: nesw-resize;
+}
+
+.pr-handle[data-handle="corner-right"] {
+  cursor: nwse-resize;
+}
+
+#prompter-screen[data-adjust] :is(.pr-outline, .pr-handle) {
+  display: block;
+}
+
+/* Barra fora do palco (não espelha) e sólida (a borda tracejada não aparece através dela).
+   Fica do lado livre da tela, em cima ou embaixo (data-adjust-bar-bottom: o motor mede as alças nos dois
+   lados e fica onde cobre menos). */
+#prompter-screen .pr-adjustbar {
+  position: absolute;
+  top: var(--pr-top);
+  left: 50%;
+  z-index: var(--z-adjust);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  width: max-content;
+  max-width: calc(100% - 2 * var(--gutter));
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-4);
+  background-color: var(--c-surface-solid);
+  transform: translateX(-50%);
+}
+
+#prompter-screen:not([data-adjust]) .pr-adjustbar {
+  display: none;
+}
+
+#prompter-screen[data-adjust-bar-bottom] .pr-adjustbar {
+  top: auto;
+  bottom: var(--pr-bottom);
+}
+
+.pr-adjustbar__measure {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+#prompter-screen .pr-seg {
+  width: 264px;
+}
+
+#prompter-screen .pr-done {
+  min-height: var(--hit);
+  padding: 0 var(--space-4);
+}
+
+/* Telas estreitas (a barra em uma linha tem ~640 px): duas linhas. Em cima, as medidas (uma sobre a
+   outra) e Concluir; embaixo, o segmentado. */
+@media (max-width: 699px) {
+  #prompter-screen .pr-adjustbar {
+    display: grid;
+    grid-template-areas:
+      "measure done"
+      "seg seg";
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: calc(100% - 2 * var(--gutter));
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+    border-radius: var(--radius-lg);
+  }
+
+  .pr-adjustbar__measure {
+    grid-area: measure;
+    line-height: var(--lh-tight);
+  }
+
+  #prompter-screen .pr-done {
+    grid-area: done;
+  }
+
+  .pr-adjustbar__w,
+  .pr-adjustbar__h {
+    display: block;
+  }
+
+  .pr-adjustbar__dot {
+    display: none;
+  }
+
+  #prompter-screen .pr-seg {
+    grid-area: seg;
+    width: auto;
+  }
+}
+
+/* Celular deitado (estreito, baixo e em paisagem): uma linha só, com as medidas uma sobre a outra. Em duas
+   linhas a barra tem 114 px, e numa tela de 375 px ela cobria as alças laterais de qualquer lado em parte das
+   alturas. Janela em pé e baixa (tela dividida do Android, 412 × 450) fica com duas linhas: numa linha só, os
+   rótulos das posições eram cortados. */
+@media (max-width: 699px) and (max-height: 499px) and (orientation: landscape) {
+  #prompter-screen .pr-adjustbar {
+    grid-template-areas: "measure seg done";
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: var(--space-1) var(--space-1) var(--space-1) var(--space-4);
+    border-radius: var(--radius-pill);
+  }
+}
+
+/* Deitado e com menos de 560 px de largura: sem as medidas (a borda tracejada mostra a área), para as três
+   posições caberem com o rótulo inteiro e alvo de 44 px. */
+@media (max-width: 559px) and (max-height: 499px) and (orientation: landscape) {
+  #prompter-screen .pr-adjustbar {
+    grid-template-areas: "seg done";
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding-left: var(--space-1);
+  }
+
+  .pr-adjustbar__measure {
+    display: none;
+  }
+}
+
+/* Deitado e com menos de 440 px (metade de um celular em tela dividida: 360 × 300): Concluir fica só com o ✓,
+   em 44 px, e "Esquerda" cabe inteira. O rótulo continua no botão, escondido só da vista (nome "Concluir"). */
+@media (max-width: 439px) and (max-height: 499px) and (orientation: landscape) {
+  #prompter-screen .pr-done {
+    width: var(--hit);
+    padding: 0;
+  }
+
+  #prompter-screen .pr-done span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+.pr-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- Responsivo (design system, seção 6) ----------
+   Abaixo de 420 px o motor põe btn--sm nos botões da pílula (36 px, toque de 44 px). */
+
+@media (max-width: 359px) {
+  #prompter-screen .pr-font-group {
+    display: none;
+  }
+}
+
+/* Celular deitado: HUD compacto, sem a dica. */
+@media (max-height: 499px) {
+  #prompter-screen {
+    --pr-edge: var(--space-2);
+  }
+
+  .pr-hint {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pr-countdown__digit {
+    animation: none;
+  }
+}

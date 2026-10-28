@@ -1,0 +1,3 @@
+Roteiro em texto puro.
+
+Segunda linha com acentos: você, informação, maçã.
